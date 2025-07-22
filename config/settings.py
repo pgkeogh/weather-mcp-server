@@ -11,7 +11,6 @@ class Settings:
     
     # Azure Configuration
     KEY_VAULT_NAME: str = os.getenv("KEY_VAULT_NAME", "")
-    #KEY_VAULT_NAME: str = "pgk-key-vault"
     
     # API Configuration
     OPENWEATHER_BASE_URL: str = "https://api.openweathermap.org/data/2.5"
