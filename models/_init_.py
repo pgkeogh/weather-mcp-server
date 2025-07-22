@@ -1,0 +1,1 @@
+"""Data models for weather forecast application."""

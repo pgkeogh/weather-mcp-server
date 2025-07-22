@@ -1,0 +1,1 @@
+"""Configuration module for weather forecast application."""
