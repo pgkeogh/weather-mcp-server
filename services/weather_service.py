@@ -69,7 +69,7 @@ class WeatherService:
                 params={
                     "q": location,
                     "appid": api_key,
-                    "units": "imperial"
+                    "units": "metric"
                 },
                 timeout=self.timeout
             )
@@ -98,7 +98,7 @@ class WeatherService:
             raise RuntimeError(f"Unable to get weather for {location}") from e
     
     async def get_forecast(self, location: str) -> List[Dict[str, Any]]:
-        """Get 5-day forecast for location."""
+        """Get 5-day forecast for location with proper daily aggregation."""
         try:
             api_key = await self._get_api_key()
             session = self._create_session()
@@ -108,7 +108,7 @@ class WeatherService:
                 params={
                     "q": location,
                     "appid": api_key,
-                    "units": "imperial"
+                    "units": "metric"
                 },
                 timeout=self.timeout
             )
@@ -116,28 +116,33 @@ class WeatherService:
             
             data = response.json()
             
-            # Process forecast data (expecting 5 days as per settings)
-            daily_forecasts = []
-            current_date = None
-            days_processed = 0
-            
+            # Group by date first (like Azure Function does)
+            daily_data = {}
             for item in data["list"]:
-                if days_processed >= Settings.EXPECTED_FORECAST_DAYS:
+                forecast_date = item["dt_txt"].split()[0]
+                if forecast_date not in daily_data:
+                    daily_data[forecast_date] = []
+                daily_data[forecast_date].append(item)
+            
+            # Aggregate daily min/max properly
+            daily_forecasts = []
+            for date, entries in sorted(daily_data.items()):
+                if len(daily_forecasts) >= Settings.EXPECTED_FORECAST_DAYS:
                     break
                     
-                forecast_date = item["dt_txt"].split()[0]
+                # Find true daily min/max across all 3-hour periods
+                temp_highs = [entry["main"]["temp_max"] for entry in entries]
+                temp_lows = [entry["main"]["temp_min"] for entry in entries]
+                descriptions = list(set(entry["weather"][0]["description"] for entry in entries))
                 
-                if forecast_date != current_date:
-                    daily_forecasts.append({
-                        "date": forecast_date,
-                        "temp_high": round(item["main"]["temp_max"]),
-                        "temp_low": round(item["main"]["temp_min"]),
-                        "description": item["weather"][0]["description"].title(),
-                        "humidity": item["main"]["humidity"],
-                        "wind_speed": round(item["wind"]["speed"])
-                    })
-                    current_date = forecast_date
-                    days_processed += 1
+                daily_forecasts.append({
+                    "date": date,
+                    "temp_high": round(max(temp_highs)),    # True daily maximum
+                    "temp_low": round(min(temp_lows)),      # True daily minimum
+                    "description": ", ".join(descriptions),
+                    "humidity": entries[0]["main"]["humidity"],  # First entry for consistency
+                    "wind_speed": round(entries[0]["wind"]["speed"])
+                })
                     
             return daily_forecasts
                 

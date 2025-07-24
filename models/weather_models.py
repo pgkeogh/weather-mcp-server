@@ -93,7 +93,7 @@ class DailyWeatherSummary:
     
     def __str__(self) -> str:
         """Professional string representation."""
-        return f"{self.formatted_date}: {self.temperature_range} ({self.conditions_summary})"
+        return f"{self.formatted_date}: {self.min_temperature} - {self.max_temperature} ({self.conditions_summary})"
     
     
 @dataclass

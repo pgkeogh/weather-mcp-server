@@ -73,10 +73,10 @@ class AIService:
             # Prepare weather context
             weather_context = f"""
 Current weather in {location}:
-- Temperature: {current_weather['temp']}°F (feels like {current_weather['feels_like']}°F)
+- Temperature: {current_weather['temp']}°C (feels like {current_weather['feels_like']}°C)
 - Condition: {current_weather['description']}
 - Humidity: {current_weather['humidity']}%
-- Wind: {current_weather['wind_speed']} mph
+- Wind: {current_weather['wind_speed']} kph
 
 5-day forecast:"""
             
